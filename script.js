@@ -25,6 +25,8 @@ function initSnake() {
 initSnake();
 
 let food = {x: 0, y: 0};
+let inputQueue = []; // Cola para manejar inputs rápidos
+
 let lastTime = 0;
 let gameSpeed = 100; // Velocidad normal
 let isSlowMo = false; // Variable para la habilidad pro
@@ -85,21 +87,41 @@ const eatSounds = [
 
 // Audio para cuando muere la serpiente
 const deathSound = new Audio("audios/death_scream.mp3");
+deathSound.volume = 0.5; // Volumen al 50%
 
-// Función para reproducir un sonido de comida al azar
+// Función para reproducir un sonido de comida según el score
 function playEatSound() {
-  const randomSound = eatSounds[Math.floor(Math.random() * eatSounds.length)];
-  randomSound.currentTime = 0; // Reiniciar desde el principio
-  randomSound.play().catch(err => console.log("Error al reproducir sonido:", err));
+  let soundFile = null;
+  
+  if (score === 5) {
+    soundFile = "audios/sweet.mp3";
+  } else if (score === 10) {
+    soundFile = "audios/tasty.mp3";
+  } else if (score === 20) {
+    soundFile = "audios/delicious.mp3";
+  } else if (score === 30) {
+    soundFile = "audios/divine.mp3";
+  }
+  
+  if (soundFile) {
+    const sound = new Audio(soundFile);
+    sound.currentTime = 0;
+    sound.play().catch(err => console.log("Error al reproducir sonido:", err));
+  }
 }
 
 // Escuchar las teclas para mover a la serpiente
 window.addEventListener("keydown", (e) => {
   startMusic(); // Inicia la música en la primera interacción
-  if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -size; }
-  if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = size; }
-  if (e.key === "ArrowLeft" && dx === 0) { dx = -size; dy = 0; }
-  if (e.key === "ArrowRight" && dx === 0) { dx = size; dy = 0; }
+  const lastInput = inputQueue.length > 0 ? inputQueue[inputQueue.length - 1] : { dx, dy };
+  
+  if (e.key === "ArrowUp" && lastInput.dy === 0) inputQueue.push({ dx: 0, dy: -size }); // aplica la queue de movimientos
+  if (e.key === "ArrowDown" && lastInput.dy === 0) inputQueue.push({ dx: 0, dy: size });
+  if (e.key === "ArrowLeft" && lastInput.dx === 0) inputQueue.push({ dx: -size, dy: 0 });
+  if (e.key === "ArrowRight" && lastInput.dx === 0) inputQueue.push({ dx: size, dy: 0 });
+
+  if (inputQueue.length > 3) inputQueue.shift(); //evita una queue de muchos movimientos
+
 });
 
 // Activar cámara lenta con la barra espaciadora
@@ -108,6 +130,12 @@ window.addEventListener("keyup", (e) => { if (e.code === "Space") isSlowMo = fal
 
 // Actualizar la lógica del juego
 function update() {
+  if (inputQueue.length > 0) { //updatea según la queue de movimientos
+    const nextMove = inputQueue.shift();
+    dx = nextMove.dx;
+    dy = nextMove.dy;
+  }
+  
   const head = { x: snake[0].x + dx, y: snake[0].y + dy };
 
   // Revisar si chocó con la pared
@@ -189,6 +217,7 @@ function gameOver() {
   scoreBoard.innerText = "Score: 0";
   // Reiniciar con cabeza y cola centradas
   initSnake();
+  inputQueue = []; // Vaciar la fila para empezar de cero
   resetFood();
 }
 
