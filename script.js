@@ -3,16 +3,28 @@ const ctx = canvas.getContext("2d");
 const scoreBoard = document.getElementById("scoreBoard");
 
 // Ajustes del tamaño de los cuadros y del mapa
-const size = 20; 
-canvas.width = 400;
-canvas.height = 400;
+const size = 48; // tamaño de cada celda (ahora más grande para sprites visibles)
+const defaultCanvas = 768; // canvas objetivo (se redondea a múltiplo de `size`)
+canvas.width = Math.floor(defaultCanvas / size) * size;
+canvas.height = Math.floor(defaultCanvas / size) * size;
 
 let score = 0;
-let snake = [{x: 200, y: 200}]; // Posición inicial
-let food = {x: 0, y: 0};
+// Inicializar serpiente centrada (cabeza + cola)
+let snake = [];
 let dx = size; // Movimiento en X
 let dy = 0;    // Movimiento en Y
 
+function initSnake() {
+  const centerX = Math.floor((canvas.width / 2) / size) * size;
+  const centerY = Math.floor((canvas.height / 2) / size) * size;
+  snake = [ { x: centerX, y: centerY }, { x: centerX - size, y: centerY } ];
+  dx = size;
+  dy = 0;
+}
+
+initSnake();
+
+let food = {x: 0, y: 0};
 let inputQueue = []; // Cola para manejar inputs rápidos
 
 let lastTime = 0;
@@ -22,6 +34,14 @@ let isSlowMo = false; // Variable para la habilidad pro
 // Cargar imagen de la manzana
 const foodImage = new Image();
 foodImage.src = "imagenes/manzana.png";
+
+// Cargar sprites de la serpiente (head, body, tail/back)
+const headImg = new Image();
+headImg.src = "imagenes/Snake/head.png";
+const bodyImg = new Image();
+bodyImg.src = "imagenes/Snake/body.png";
+const tailImg = new Image();
+tailImg.src = "imagenes/Snake/back.png";
 
 // Cargar música de fondo
 const backgroundMusic = new Audio();
@@ -153,10 +173,38 @@ function draw() {
     ctx.fillRect(food.x, food.y, size - 2, size - 2);
   }
 
-  // Dibujar la serpiente (color verde)
+  // Dibujar la serpiente usando imágenes: cabeza, cuerpo y cola
   snake.forEach((seg, index) => {
-    ctx.fillStyle = index === 0 ? "#2ed573" : "#7bed9f"; 
-    ctx.fillRect(seg.x, seg.y, size - 2, size - 2);
+    const w = size - 2;
+    const h = size - 2;
+    let img = null;
+    let angle = 0;
+
+    if (index === 0) {
+      img = headImg;
+      angle = Math.atan2(dy, dx);
+    } else if (index === snake.length - 1) {
+      img = tailImg;
+      const prev = snake[index - 1];
+      angle = Math.atan2(seg.y - prev.y, seg.x - prev.x);
+    } else {
+      img = bodyImg;
+      const prev = snake[index - 1];
+      const next = snake[index + 1];
+      angle = Math.atan2(next.y - prev.y, next.x - prev.x);
+    }
+
+    ctx.save();
+    ctx.translate(seg.x + w / 2, seg.y + h / 2);
+    ctx.rotate(angle);
+    if (img && img.complete) {
+      ctx.drawImage(img, -w / 2, -h / 2, w, h);
+    } else {
+      // Fallback a rectángulo si la imagen no está lista
+      ctx.fillStyle = index === 0 ? "#2ed573" : "#7bed9f";
+      ctx.fillRect(-w / 2, -h / 2, w, h);
+    }
+    ctx.restore();
   });
 }
 
@@ -167,9 +215,8 @@ function gameOver() {
   alert("GAME OVER! Score: " + score);
   score = 0;
   scoreBoard.innerText = "Score: 0";
-  snake = [{x: 200, y: 200}];
-  dx = size;
-  dy = 0;
+  // Reiniciar con cabeza y cola centradas
+  initSnake();
   inputQueue = []; // Vaciar la fila para empezar de cero
   resetFood();
 }
