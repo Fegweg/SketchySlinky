@@ -30,6 +30,7 @@ let inputQueue = []; // Cola para manejar inputs rápidos
 let lastTime = 0;
 let gameSpeed = 100; // Velocidad normal
 let isSlowMo = false; // Variable para la habilidad pro
+let isGameOver = false; // Estado del juego
 
 // Cargar imagen de la manzana
 const foodImage = new Image();
@@ -112,6 +113,18 @@ function playEatSound() {
 
 // Escuchar las teclas para mover a la serpiente
 window.addEventListener("keydown", (e) => {
+if (isGameOver) { // reinicia el juego si se presiona una tecla después de perder
+    isGameOver = false;
+    score = 0;
+    scoreBoard.innerText = "Score: 0";
+    
+    initSnake();
+
+    inputQueue = [];
+    resetFood();
+    return; 
+}
+
   startMusic(); // Inicia la música en la primera interacción
   const lastInput = inputQueue.length > 0 ? inputQueue[inputQueue.length - 1] : { dx, dy };
   
@@ -173,6 +186,29 @@ function draw() {
     ctx.fillRect(food.x, food.y, size - 2, size - 2);
   }
 
+  if (isGameOver) { // Mostrar la pantalla de GAME OVER
+    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    
+    ctx.font = "bold 80px Arial";
+    ctx.fillStyle = "#2c8d11";
+    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 55);
+
+    ctx.font = "40px Arial";
+    ctx.fillStyle = "white";
+    ctx.fillText("You killed him...", canvas.width / 2, canvas.height / 2 + 10);
+
+    ctx.font = "20px Arial";
+    ctx.fillText("Final Score: " + score, canvas.width / 2, canvas.height / 2 + 55);
+
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "#7bed9f";
+    ctx.fillText("Press any key to restart", canvas.width / 2, canvas.height / 2 + 95);
+  }
+
   // Dibujar la serpiente usando imágenes: cabeza, cuerpo y cola
   snake.forEach((seg, index) => {
     const w = size - 2;
@@ -210,27 +246,24 @@ function draw() {
 
 // Reiniciar el juego cuando pierdes
 function gameOver() {
+  isGameOver = true; // Define el final del juego
   deathSound.currentTime = 0;
-  deathSound.play().catch(err => console.log("Error al reproducir sonido de muerte:", err));
-  alert("GAME OVER! Score: " + score);
-  score = 0;
-  scoreBoard.innerText = "Score: 0";
-  // Reiniciar con cabeza y cola centradas
-  initSnake();
-  inputQueue = []; // Vaciar la fila para empezar de cero
-  resetFood();
+  deathSound.play().catch(err => console.log("Error:", err));
 }
 
 // Bucle principal del juego
 function main(currentTime) {
   window.requestAnimationFrame(main);
+  if (isGameOver) return; // si estás muerto, no actualizar
   const diff = currentTime - lastTime;
   
   // Aquí se aplica la cámara lenta (hace que el delay sea mayor)
   let currentDelay = isSlowMo ? gameSpeed * 3 : gameSpeed;
 
   if (diff > currentDelay) {
-    update();
+    if (!isGameOver) { // solo hacer si sigue el juego
+      update();
+    }
     draw();
     lastTime = currentTime;
   }
