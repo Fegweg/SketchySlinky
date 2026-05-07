@@ -1,7 +1,6 @@
 /* Estilo del fondo de la página */
 body {
   margin: 0;
-  background: #000000; /* Color negro de fondo */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -9,6 +8,26 @@ body {
   height: 100vh;
   font-family: 'Poppins', Arial, sans-serif;
   color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Video de fondo */
+#backgroundVideo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+}
+
+/* Contenedor del juego con z-index mayor */
+.info,
+canvas {
+  position: relative;
+  z-index: 1;
 }
 
 /* Estilo del cuadro del juego */
