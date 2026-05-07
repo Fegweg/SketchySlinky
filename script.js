@@ -4,7 +4,7 @@ const scoreBoard = document.getElementById("scoreBoard");
 
 // Ajustes del tamaño de los cuadros y del mapa
 const size = 48; // tamaño de cada celda (ahora más grande para sprites visibles)
-const defaultCanvas = 720; // canvas objetivo (se redondea a múltiplo de `size`)
+const defaultCanvas = 400; // canvas objetivo (se redondea a múltiplo de `size`)
 canvas.width = Math.floor(defaultCanvas / size) * size;
 canvas.height = Math.floor(defaultCanvas / size) * size;
 
