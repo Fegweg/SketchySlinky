@@ -54,6 +54,21 @@ function playSound(freq) {
   osc.stop(audioCtx.currentTime + 0.1);
 }
 
+// Audios para cuando se come la manzana
+const eatSounds = [
+  new Audio("audios/delicious.mp3"),
+  new Audio("audios/divine.mp3"),
+  new Audio("audios/sweet.mp3"),
+  new Audio("audios/tasty.mp3")
+];
+
+// Función para reproducir un sonido de comida al azar
+function playEatSound() {
+  const randomSound = eatSounds[Math.floor(Math.random() * eatSounds.length)];
+  randomSound.currentTime = 0; // Reiniciar desde el principio
+  randomSound.play().catch(err => console.log("Error al reproducir sonido:", err));
+}
+
 // Escuchar las teclas para mover a la serpiente
 window.addEventListener("keydown", (e) => {
   startMusic(); // Inicia la música en la primera interacción
@@ -87,7 +102,7 @@ function update() {
   if (head.x === food.x && head.y === food.y) {
     score++;
     scoreBoard.innerText = "Score: " + score;
-    playSound(600); // Sonido agudo
+    playEatSound(); // Reproducir sonido aleatorio
     resetFood();
   } else {
     snake.pop(); // Quitar el último pedazo si no comió
