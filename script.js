@@ -16,6 +16,10 @@ let lastTime = 0;
 let gameSpeed = 100; // Velocidad normal
 let isSlowMo = false; // Variable para la habilidad pro
 
+// Cargar imagen de la manzana
+const foodImage = new Image();
+foodImage.src = "imagenes/manzana.png";
+
 // Función para poner la comida en un lugar al azar
 function resetFood() {
   food.x = Math.floor(Math.random() * (canvas.width / size)) * size;
@@ -80,9 +84,13 @@ function update() {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Dibujar la comida (color rojo)
-  ctx.fillStyle = "#ff4757"; 
-  ctx.fillRect(food.x, food.y, size - 2, size - 2);
+  // Dibujar la comida (imagen de manzana)
+  if (foodImage.complete) {
+    ctx.drawImage(foodImage, food.x, food.y, size - 2, size - 2);
+  } else {
+    ctx.fillStyle = "#ff4757"; 
+    ctx.fillRect(food.x, food.y, size - 2, size - 2);
+  }
 
   // Dibujar la serpiente (color verde)
   snake.forEach((seg, index) => {
