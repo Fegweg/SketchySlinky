@@ -3,9 +3,10 @@ const ctx = canvas.getContext("2d");
 const scoreBoard = document.getElementById("scoreBoard");
 
 // Ajustes del tamaño de los cuadros y del mapa
-const size = 40; // tamaño de cada celda
-canvas.width = 800; // ancho del canvas
-canvas.height = 400; // alto del canvas
+const size = 48; // tamaño de cada celda (ahora más grande para sprites visibles)
+const defaultCanvas = 768; // canvas objetivo (se redondea a múltiplo de `size`)
+canvas.width = Math.floor(defaultCanvas / size) * size;
+canvas.height = Math.floor(defaultCanvas / size) * size;
 
 let score = 0;
 // Inicializar serpiente centrada (cabeza + cola)
@@ -29,6 +30,7 @@ let inputQueue = []; // Cola para manejar inputs rápidos
 let lastTime = 0;
 let gameSpeed = 100; // Velocidad normal
 let isSlowMo = false; // Variable para la habilidad pro
+let isGameOver = false; // Estado del juego
 
 // Cargar imagen de la manzana
 const foodImage = new Image();
@@ -41,15 +43,6 @@ const bodyImg = new Image();
 bodyImg.src = "imagenes/Snake/body.png";
 const tailImg = new Image();
 tailImg.src = "imagenes/Snake/back.png";
-// Cargar imagen de mina
-const mineImg = new Image();
-mineImg.src = "imagenes/mine.png";
-
-// Minas en juego
-const mines = [];
-const mineDuration = 10000; // ms
-const mineSpawnChance = 0.3; // 30%
-const maxMines = 3;
 
 // Cargar música de fondo
 const backgroundMusic = new Audio();
@@ -68,41 +61,8 @@ function startMusic() {
 
 // Función para poner la comida en un lugar al azar
 function resetFood() {
-  const pos = randomEmptyPosition();
-  if (pos) {
-    food.x = pos.x;
-    food.y = pos.y;
-  }
-  // Intentar generar minas si la puntuación es >= 10
-  trySpawnMines();
-}
-
-function randomEmptyPosition() {
-  // Intenta varias veces encontrar una celda vacía (no en la serpiente ni en minas)
-  for (let i = 0; i < 100; i++) {
-    const x = Math.floor(Math.random() * (canvas.width / size)) * size;
-    const y = Math.floor(Math.random() * (canvas.height / size)) * size;
-    const onSnake = snake.some(seg => seg.x === x && seg.y === y);
-    const onMine = mines.some(m => m.x === x && m.y === y);
-    const onFood = (food.x === x && food.y === y);
-    if (!onSnake && !onMine && !onFood) return { x, y };
-  }
-  return null;
-}
-
-function trySpawnMines() {
-  if (score < 10) return;
-  // number of attempts equals remaining slots
-  let attempts = maxMines - mines.length;
-  while (attempts > 0) {
-    if (Math.random() <= mineSpawnChance) {
-      const pos = randomEmptyPosition();
-      if (pos) {
-        mines.push({ x: pos.x, y: pos.y, spawnTime: Date.now() });
-      }
-    }
-    attempts--;
-  }
+  food.x = Math.floor(Math.random() * (canvas.width / size)) * size;
+  food.y = Math.floor(Math.random() * (canvas.height / size)) * size;
 }
 
 // Función para crear sonidos sin archivos externos
@@ -153,6 +113,18 @@ function playEatSound() {
 
 // Escuchar las teclas para mover a la serpiente
 window.addEventListener("keydown", (e) => {
+if (isGameOver) { // reinicia el juego si se presiona una tecla después de perder
+    isGameOver = false;
+    score = 0;
+    scoreBoard.innerText = "Score: 0";
+    
+    initSnake();
+
+    inputQueue = [];
+    resetFood();
+    return; 
+}
+
   startMusic(); // Inicia la música en la primera interacción
   const lastInput = inputQueue.length > 0 ? inputQueue[inputQueue.length - 1] : { dx, dy };
   
@@ -181,13 +153,6 @@ function update() {
 
   // Revisar si chocó con la pared
   if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height) {
-    return gameOver();
-  }
-
-  // Revisar si chocó con una mina
-  if (mines.some(m => m.x === head.x && m.y === head.y)) {
-    // Explota: game over inmediatamente
-    playSound(120); // efecto de explosión breve
     return gameOver();
   }
 
@@ -255,33 +220,35 @@ function draw() {
     ctx.restore();
   });
 
-  // Dibujar las minas
-  mines.forEach(m => {
-    const w = size - 2;
-    const h = size - 2;
-    ctx.save();
-    ctx.translate(m.x + w / 2, m.y + h / 2);
-    if (mineImg && mineImg.complete) {
-      ctx.drawImage(mineImg, -w / 2, -h / 2, w, h);
-    } else {
-      ctx.fillStyle = "#aa2b2b";
-      ctx.fillRect(-w / 2, -h / 2, w, h);
-    }
-    ctx.restore();
-  });
+  if (isGameOver) { // Mostrar la pantalla de GAME OVER
+    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    
+    ctx.font = "bold 80px Arial";
+    ctx.fillStyle = "#2c8d11";
+    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 55);
+
+    ctx.font = "40px Arial";
+    ctx.fillStyle = "white";
+    ctx.fillText("You killed him...", canvas.width / 2, canvas.height / 2 + 10);
+
+    ctx.font = "20px Arial";
+    ctx.fillText("Final Score: " + score, canvas.width / 2, canvas.height / 2 + 55);
+
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "#7bed9f";
+    ctx.fillText("Press any key to restart", canvas.width / 2, canvas.height / 2 + 95);
+  }  
 }
 
 // Reiniciar el juego cuando pierdes
 function gameOver() {
+  isGameOver = true; // Define el final del juego
   deathSound.currentTime = 0;
-  deathSound.play().catch(err => console.log("Error al reproducir sonido de muerte:", err));
-  alert("GAME OVER! Score: " + score);
-  score = 0;
-  scoreBoard.innerText = "Score: 0";
-  // Reiniciar con cabeza y cola centradas
-  initSnake();
-  inputQueue = []; // Vaciar la fila para empezar de cero
-  resetFood();
+  deathSound.play().catch(err => console.log("Error:", err));
 }
 
 // Bucle principal del juego
@@ -293,11 +260,8 @@ function main(currentTime) {
   let currentDelay = isSlowMo ? gameSpeed * 3 : gameSpeed;
 
   if (diff > currentDelay) {
-    update();
-    // limpiar minas expiradas
-    const now = Date.now();
-    for (let i = mines.length - 1; i >= 0; i--) {
-      if (now - mines[i].spawnTime > mineDuration) mines.splice(i, 1);
+    if (!isGameOver) { // solo hacer si sigue el juego
+      update();
     }
     draw();
     lastTime = currentTime;
