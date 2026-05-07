@@ -47,11 +47,9 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "ArrowRight" && dx === 0) { dx = size; dy = 0; }
 });
 
-// Activar cámara lenta al hacer click o presionar espacio
-window.addEventListener("mousedown", () => isSlowMo = true);
-window.addEventListener("mouseup", () => isSlowMo = false);
-window.addEventListener("keydown", (e) => { if(e.code === "Space") isSlowMo = true; });
-window.addEventListener("keyup", (e) => { if(e.code === "Space") isSlowMo = false; });
+// Activar cámara lenta con la barra espaciadora
+window.addEventListener("keydown", (e) => { if (e.code === "Space") isSlowMo = true; });
+window.addEventListener("keyup", (e) => { if (e.code === "Space") isSlowMo = false; });
 
 // Actualizar la lógica del juego
 function update() {
