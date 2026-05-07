@@ -11,26 +11,29 @@ canvas.height = Math.floor(defaultCanvas / size) * size;
 let score = 0;
 // Inicializar serpiente centrada (cabeza + cola)
 let snake = [];
-let dx = size; // Movimiento en X
-let dy = 0;    // Movimiento en Y
+let dx = 0; // Empieza sin dirección
+let dy = 0;    
+let gameStarted = false;
+let lastTime = 0;
+let gameSpeed = 100; // Velocidad normal
+let isSlowMo = false; // Variable para la habilidad pro
+let isGameOver = false; // Estado del juego
+
 
 function initSnake() {
   const centerX = Math.floor((canvas.width / 2) / size) * size;
   const centerY = Math.floor((canvas.height / 2) / size) * size;
-  snake = [ { x: centerX, y: centerY }, { x: centerX - size, y: centerY } ];
-  dx = size;
-  dy = 0;
+  snake = [ { x: centerX, y: centerY }, { x: centerX, y: centerY } ]; // Arreglar para poder inicial a cualquiera de las 4 direcciones
+  dx = 0; // Resetea sin dirección
+  dy = 0; 
+  gameStarted = false;
+  isGameOver = false;
 }
 
 initSnake();
 
 let food = {x: 0, y: 0};
 let inputQueue = []; // Cola para manejar inputs rápidos
-
-let lastTime = 0;
-let gameSpeed = 100; // Velocidad normal
-let isSlowMo = false; // Variable para la habilidad pro
-let isGameOver = false; // Estado del juego
 
 // Cargar imagen de la manzana
 const foodImage = new Image();
@@ -113,29 +116,46 @@ function playEatSound() {
 
 // Escuchar las teclas para mover a la serpiente
 window.addEventListener("keydown", (e) => {
-if (isGameOver) { // reinicia el juego si se presiona una tecla después de perder
-    isGameOver = false;
-    score = 0;
-    scoreBoard.innerText = "Score: 0";
-    
-    initSnake();
+  const isDirectional = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key); // definir flechas
 
-    inputQueue = [];
-    resetFood();
-    return; 
-}
+    // Empezar el juego si se presiona una flecha hacia esa dirección
+    if (isGameOver && isDirectional) {
+        isGameOver = false;
+        score = 0;
+        scoreBoard.innerText = "Score: 0";
+        initSnake(); 
+        resetFood();
+        inputQueue = [];
+    }
 
-  startMusic(); // Inicia la música en la primera interacción
-  const lastInput = inputQueue.length > 0 ? inputQueue[inputQueue.length - 1] : { dx, dy };
-  
-  if (e.key === "ArrowUp" && lastInput.dy === 0) inputQueue.push({ dx: 0, dy: -size }); // aplica la queue de movimientos
-  if (e.key === "ArrowDown" && lastInput.dy === 0) inputQueue.push({ dx: 0, dy: size });
-  if (e.key === "ArrowLeft" && lastInput.dx === 0) inputQueue.push({ dx: -size, dy: 0 });
-  if (e.key === "ArrowRight" && lastInput.dx === 0) inputQueue.push({ dx: size, dy: 0 });
+    if (isDirectional) {
+        startMusic();
+        if (!gameStarted) {
+            gameStarted = true;
+        }
 
-  if (inputQueue.length > 3) inputQueue.shift(); //evita una queue de muchos movimientos
+        // Determinar dirección
+        let nextDx = 0;
+        let nextDy = 0;
+        if (e.key === "ArrowUp")    { nextDx = 0; nextDy = -size; }
+        if (e.key === "ArrowDown")  { nextDx = 0; nextDy = size; }
+        if (e.key === "ArrowLeft")  { nextDx = -size; nextDy = 0; }
+        if (e.key === "ArrowRight") { nextDx = size; nextDy = 0; }
 
+        // Si el juego acaba de empezar, asignamos dx/dy directamente
+        if (inputQueue.length === 0 && dx === 0 && dy === 0) {
+            dx = nextDx;
+            dy = nextDy;
+        } else {
+            // Si ya se está moviendo, usamos la cola para evitar suicidios por giros rápidos
+            const lastInput = inputQueue.length > 0 ? inputQueue[inputQueue.length - 1] : { dx, dy };
+            if (nextDx !== -lastInput.dx || nextDy !== -lastInput.dy) {
+                inputQueue.push({ dx: nextDx, dy: nextDy });
+            }
+        }
+    }
 });
+
 
 // Activar cámara lenta con la barra espaciadora
 window.addEventListener("keydown", (e) => { if (e.code === "Space") isSlowMo = true; });
@@ -143,6 +163,8 @@ window.addEventListener("keyup", (e) => { if (e.code === "Space") isSlowMo = fal
 
 // Actualizar la lógica del juego
 function update() {
+  if (!gameStarted) return;
+
   if (inputQueue.length > 0) { //updatea según la queue de movimientos
     const nextMove = inputQueue.shift();
     dx = nextMove.dx;
@@ -188,6 +210,7 @@ function draw() {
 
   // Dibujar la serpiente usando imágenes: cabeza, cuerpo y cola
   snake.forEach((seg, index) => {
+    
     const w = size - 2;
     const h = size - 2;
     let img = null;
@@ -195,7 +218,11 @@ function draw() {
 
     if (index === 0) {
       img = headImg;
-      angle = Math.atan2(dy, dx);
+      if (dx === 0 && dy === 0) {
+            angle = 0; 
+        } else {
+            angle = Math.atan2(dy, dx);
+        }
     } else if (index === snake.length - 1) {
       img = tailImg;
       const prev = snake[index - 1];
@@ -220,7 +247,7 @@ function draw() {
     ctx.restore();
   });
 
-  if (isGameOver) { // Mostrar la pantalla de GAME OVER
+  if (isGameOver) { 
     ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -240,8 +267,15 @@ function draw() {
 
     ctx.font = "16px Arial";
     ctx.fillStyle = "#7bed9f";
-    ctx.fillText("Press any key to restart", canvas.width / 2, canvas.height / 2 + 95);
+    ctx.fillText("Press any arrow key to restart", canvas.width / 2, canvas.height / 2 + 95);
   }  
+  else if (!gameStarted) {
+    // Mensaje de inicio al abrir el juego
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    ctx.font = "20px Arial";
+    ctx.fillText("Press any arrow key to start", canvas.width / 2, canvas.height - 100);
+  }
 }
 
 // Reiniciar el juego cuando pierdes
@@ -269,5 +303,6 @@ function main(currentTime) {
 }
 
 // Iniciar el juego
+initSnake();
 resetFood();
 main();
