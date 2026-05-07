@@ -1,0 +1,25 @@
+/* Estilo del fondo de la página */
+body {
+  margin: 0;
+  background: #8f3cbc; /* Color morado de fondo */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+  color: white;
+}
+
+/* Estilo del cuadro del juego */
+canvas {
+  border: 4px solid #fff;
+  background: #3b3b3b; /* Color gris oscuro del tablero */
+  box-shadow: 0 0 20px rgba(0,0,0,0.3);
+}
+
+/* Estilo de los textos */
+.info {
+  margin-bottom: 10px;
+  text-align: center;
+}
