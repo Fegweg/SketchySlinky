@@ -65,11 +65,29 @@ const eatSounds = [
   new Audio("audios/tasty.mp3")
 ];
 
-// Función para reproducir un sonido de comida al azar
+// Audio para cuando muere la serpiente
+const deathSound = new Audio("audios/death_scream.mp3");
+deathSound.volume = 0.5; // Volumen al 50%
+
+// Función para reproducir un sonido de comida según el score
 function playEatSound() {
-  const randomSound = eatSounds[Math.floor(Math.random() * eatSounds.length)];
-  randomSound.currentTime = 0; // Reiniciar desde el principio
-  randomSound.play().catch(err => console.log("Error al reproducir sonido:", err));
+  let soundFile = null;
+  
+  if (score === 5) {
+    soundFile = "audios/sweet.mp3";
+  } else if (score === 10) {
+    soundFile = "audios/tasty.mp3";
+  } else if (score === 20) {
+    soundFile = "audios/delicious.mp3";
+  } else if (score === 30) {
+    soundFile = "audios/divine.mp3";
+  }
+  
+  if (soundFile) {
+    const sound = new Audio(soundFile);
+    sound.currentTime = 0;
+    sound.play().catch(err => console.log("Error al reproducir sonido:", err));
+  }
 }
 
 // Escuchar las teclas para mover a la serpiente
@@ -144,7 +162,8 @@ function draw() {
 
 // Reiniciar el juego cuando pierdes
 function gameOver() {
-  playSound(150); // Sonido grave de muerte
+  deathSound.currentTime = 0;
+  deathSound.play().catch(err => console.log("Error al reproducir sonido de muerte:", err));
   alert("GAME OVER! Score: " + score);
   score = 0;
   scoreBoard.innerText = "Score: 0";
