@@ -98,9 +98,9 @@ function playEatSound() {
     soundFile = "audios/sweet.mp3";
   } else if (score === 10) {
     soundFile = "audios/tasty.mp3";
-  } else if (score === 20) {
+  } else if (score === 15) {
     soundFile = "audios/delicious.mp3";
-  } else if (score === 30) {
+  } else if (score === 20) {
     soundFile = "audios/divine.mp3";
   }
   
