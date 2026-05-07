@@ -3,10 +3,9 @@ const ctx = canvas.getContext("2d");
 const scoreBoard = document.getElementById("scoreBoard");
 
 // Ajustes del tamaño de los cuadros y del mapa
-const size = 48; // tamaño de cada celda (ahora más grande para sprites visibles)
-const defaultCanvas = 768; // canvas objetivo (se redondea a múltiplo de `size`)
-canvas.width = Math.floor(defaultCanvas / size) * size;
-canvas.height = Math.floor(defaultCanvas / size) * size;
+const size = 40; // tamaño de cada celda
+canvas.width = 800; // ancho del canvas
+canvas.height = 400; // alto del canvas
 
 let score = 0;
 // Inicializar serpiente centrada (cabeza + cola)
