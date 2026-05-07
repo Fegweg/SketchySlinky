@@ -20,6 +20,13 @@ let isSlowMo = false; // Variable para la habilidad pro
 const foodImage = new Image();
 foodImage.src = "imagenes/manzana.png";
 
+// Cargar música de fondo
+const backgroundMusic = new Audio();
+backgroundMusic.src = "audios/piggies.mp3";
+backgroundMusic.loop = true; // Repetir infinitamente
+backgroundMusic.volume = 0.5; // Volumen al 50%
+backgroundMusic.play(); // Iniciar música al cargar la página
+
 // Función para poner la comida en un lugar al azar
 function resetFood() {
   food.x = Math.floor(Math.random() * (canvas.width / size)) * size;
