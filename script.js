@@ -62,6 +62,9 @@ const eatSounds = [
   new Audio("audios/tasty.mp3")
 ];
 
+// Audio para cuando muere la serpiente
+const deathSound = new Audio("audios/death_scream.mp3");
+
 // Función para reproducir un sonido de comida al azar
 function playEatSound() {
   const randomSound = eatSounds[Math.floor(Math.random() * eatSounds.length)];
@@ -132,7 +135,8 @@ function draw() {
 
 // Reiniciar el juego cuando pierdes
 function gameOver() {
-  playSound(150); // Sonido grave de muerte
+  deathSound.currentTime = 0;
+  deathSound.play().catch(err => console.log("Error al reproducir sonido de muerte:", err));
   alert("GAME OVER! Score: " + score);
   score = 0;
   scoreBoard.innerText = "Score: 0";
