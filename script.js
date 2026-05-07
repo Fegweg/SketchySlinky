@@ -186,29 +186,6 @@ function draw() {
     ctx.fillRect(food.x, food.y, size - 2, size - 2);
   }
 
-  if (isGameOver) { // Mostrar la pantalla de GAME OVER
-    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "white";
-    ctx.textAlign = "center";
-    
-    ctx.font = "bold 80px Arial";
-    ctx.fillStyle = "#2c8d11";
-    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 55);
-
-    ctx.font = "40px Arial";
-    ctx.fillStyle = "white";
-    ctx.fillText("You killed him...", canvas.width / 2, canvas.height / 2 + 10);
-
-    ctx.font = "20px Arial";
-    ctx.fillText("Final Score: " + score, canvas.width / 2, canvas.height / 2 + 55);
-
-    ctx.font = "16px Arial";
-    ctx.fillStyle = "#7bed9f";
-    ctx.fillText("Press any key to restart", canvas.width / 2, canvas.height / 2 + 95);
-  }
-
   // Dibujar la serpiente usando imágenes: cabeza, cuerpo y cola
   snake.forEach((seg, index) => {
     const w = size - 2;
@@ -242,6 +219,29 @@ function draw() {
     }
     ctx.restore();
   });
+
+  if (isGameOver) { // Mostrar la pantalla de GAME OVER
+    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    
+    ctx.font = "bold 80px Arial";
+    ctx.fillStyle = "#2c8d11";
+    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 55);
+
+    ctx.font = "40px Arial";
+    ctx.fillStyle = "white";
+    ctx.fillText("You killed him...", canvas.width / 2, canvas.height / 2 + 10);
+
+    ctx.font = "20px Arial";
+    ctx.fillText("Final Score: " + score, canvas.width / 2, canvas.height / 2 + 55);
+
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "#7bed9f";
+    ctx.fillText("Press any key to restart", canvas.width / 2, canvas.height / 2 + 95);
+  }  
 }
 
 // Reiniciar el juego cuando pierdes
@@ -254,7 +254,6 @@ function gameOver() {
 // Bucle principal del juego
 function main(currentTime) {
   window.requestAnimationFrame(main);
-  if (isGameOver) return; // si estás muerto, no actualizar
   const diff = currentTime - lastTime;
   
   // Aquí se aplica la cámara lenta (hace que el delay sea mayor)
