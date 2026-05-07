@@ -12,6 +12,9 @@ let snake = [{x: 200, y: 200}]; // Posición inicial
 let food = {x: 0, y: 0};
 let dx = size; // Movimiento en X
 let dy = 0;    // Movimiento en Y
+
+let inputQueue = []; // Cola para manejar inputs rápidos
+
 let lastTime = 0;
 let gameSpeed = 100; // Velocidad normal
 let isSlowMo = false; // Variable para la habilidad pro
@@ -72,10 +75,15 @@ function playEatSound() {
 // Escuchar las teclas para mover a la serpiente
 window.addEventListener("keydown", (e) => {
   startMusic(); // Inicia la música en la primera interacción
-  if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -size; }
-  if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = size; }
-  if (e.key === "ArrowLeft" && dx === 0) { dx = -size; dy = 0; }
-  if (e.key === "ArrowRight" && dx === 0) { dx = size; dy = 0; }
+  const lastInput = inputQueue.length > 0 ? inputQueue[inputQueue.length - 1] : { dx, dy };
+  
+  if (e.key === "ArrowUp" && lastInput.dy === 0) inputQueue.push({ dx: 0, dy: -size }); // aplica la queue de movimientos
+  if (e.key === "ArrowDown" && lastInput.dy === 0) inputQueue.push({ dx: 0, dy: size });
+  if (e.key === "ArrowLeft" && lastInput.dx === 0) inputQueue.push({ dx: -size, dy: 0 });
+  if (e.key === "ArrowRight" && lastInput.dx === 0) inputQueue.push({ dx: size, dy: 0 });
+
+  if (inputQueue.length > 3) inputQueue.shift(); //evita una queue de muchos movimientos
+
 });
 
 // Activar cámara lenta con la barra espaciadora
@@ -84,6 +92,12 @@ window.addEventListener("keyup", (e) => { if (e.code === "Space") isSlowMo = fal
 
 // Actualizar la lógica del juego
 function update() {
+  if (inputQueue.length > 0) { //updatea según la queue de movimientos
+    const nextMove = inputQueue.shift();
+    dx = nextMove.dx;
+    dy = nextMove.dy;
+  }
+  
   const head = { x: snake[0].x + dx, y: snake[0].y + dy };
 
   // Revisar si chocó con la pared
@@ -137,6 +151,7 @@ function gameOver() {
   snake = [{x: 200, y: 200}];
   dx = size;
   dy = 0;
+  inputQueue = []; // Vaciar la fila para empezar de cero
   resetFood();
 }
 
