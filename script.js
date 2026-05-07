@@ -25,7 +25,15 @@ const backgroundMusic = new Audio();
 backgroundMusic.src = "audios/piggies.mp3";
 backgroundMusic.loop = true; // Repetir infinitamente
 backgroundMusic.volume = 0.5; // Volumen al 50%
-backgroundMusic.play(); // Iniciar música al cargar la página
+let musicStarted = false;
+
+// Iniciar música en la primera interacción
+function startMusic() {
+  if (!musicStarted) {
+    backgroundMusic.play().catch(err => console.log("No se pudo reproducir la música:", err));
+    musicStarted = true;
+  }
+}
 
 // Función para poner la comida en un lugar al azar
 function resetFood() {
@@ -48,6 +56,7 @@ function playSound(freq) {
 
 // Escuchar las teclas para mover a la serpiente
 window.addEventListener("keydown", (e) => {
+  startMusic(); // Inicia la música en la primera interacción
   if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -size; }
   if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = size; }
   if (e.key === "ArrowLeft" && dx === 0) { dx = -size; dy = 0; }
