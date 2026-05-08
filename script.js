@@ -87,8 +87,16 @@ function startMusic() {
 
 // Función para poner la comida en un lugar al azar
 function resetFood() {
-  food.x = Math.floor(Math.random() * (canvas.width / size)) * size;
-  food.y = Math.floor(Math.random() * (canvas.height / size)) * size;
+  // Colocar la manzana en una celda aleatoria que NO esté sobre la serpiente ni sobre bombas
+  let attempts = 0;
+  do {
+    food.x = Math.floor(Math.random() * (canvas.width / size)) * size;
+    food.y = Math.floor(Math.random() * (canvas.height / size)) * size;
+    attempts++;
+    const onSnake = snake.some(s => s.x === food.x && s.y === food.y);
+    const onBomb = bombs.some(b => b.x === food.x && b.y === food.y);
+    if (!onSnake && !onBomb) break;
+  } while (attempts < 200);
 }
 
 // Función para crear sonidos sin archivos externos
@@ -193,9 +201,9 @@ function update() {
   bombs = bombs.filter(b => now - b.spawnTime < 5000);
 
   // Si el score ya permite bombas, intentar spawn según probabilidad y límite
-  if (score >= 10) {
-    const prob = score >= 35 ? 0.35 : 0.2 + ((score - 10) / (35 - 10)) * 0.15; // 20% -> 35%
-    const maxBombs = score >= 40 ? 5 : Math.max(1, Math.floor(1 + ((score - 10) / (40 - 10)) * 4));
+  if (score >= 5) {
+    const prob = score >= 35 ? 0.35 : 0.2 + ((score - 5) / (35 - 5)) * 0.15; // 20% -> 35%
+    const maxBombs = score >= 40 ? 5 : Math.max(1, Math.floor(1 + ((score - 5) / (40 - 5)) * 4));
     if (bombs.length < maxBombs && Math.random() < prob) {
       // intentar ubicar bomba en posición aleatoria que no coincida con la serpiente, comida o bombas
       let attempts = 0;
