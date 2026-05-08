@@ -8,6 +8,7 @@ canvas.width = 800; // ancho del canvas
 canvas.height = 400; // alto del canvas
 
 let score = 0;
+let bestScore = 0; // mejor puntaje (persistente)
 // Inicializar serpiente centrada (cabeza + cola)
 let snake = [];
 let dx = 0; // Empieza sin dirección
@@ -30,6 +31,16 @@ function initSnake() {
 }
 
 initSnake();
+
+// Cargar best score desde localStorage
+const savedBest = localStorage.getItem('snakeBestScore');
+bestScore = savedBest ? parseInt(savedBest, 10) : 0;
+
+function updateScoreBoard() {
+  scoreBoard.innerText = "Score: " + score + "  Best: " + bestScore;
+}
+
+updateScoreBoard();
 
 let food = {x: 0, y: 0};
 let inputQueue = []; // Cola para manejar inputs rápidos
@@ -134,7 +145,7 @@ window.addEventListener("keydown", (e) => {
     if (isGameOver && isDirectional) {
         isGameOver = false;
         score = 0;
-        scoreBoard.innerText = "Score: 0";
+      updateScoreBoard();
         initSnake(); 
         resetFood();
         inputQueue = [];
@@ -237,7 +248,12 @@ function update() {
   // Revisar si comió la manzana
   if (head.x === food.x && head.y === food.y) {
     score++;
-    scoreBoard.innerText = "Score: " + score;
+    // actualizar marcador y posible best score en pantalla
+    if (score > bestScore) {
+      bestScore = score;
+      localStorage.setItem('snakeBestScore', bestScore);
+    }
+    updateScoreBoard();
     playEatSound(); // Reproducir sonido aleatorio
     resetFood();
   } else {
@@ -338,9 +354,13 @@ function draw() {
     ctx.font = "20px Arial";
     ctx.fillText("Final Score: " + score, canvas.width / 2, canvas.height / 2 + 55);
 
+    ctx.font = "18px Arial";
+    ctx.fillStyle = "#7bed9f";
+    ctx.fillText("Best: " + bestScore, canvas.width / 2, canvas.height / 2 + 95);
+
     ctx.font = "16px Arial";
     ctx.fillStyle = "#7bed9f";
-    ctx.fillText("Press any arrow key to restart", canvas.width / 2, canvas.height / 2 + 95);
+    ctx.fillText("Press any arrow key to restart", canvas.width / 2, canvas.height / 2 + 135);
   }  
   else if (!gameStarted) {
     // Mensaje de inicio al abrir el juego
@@ -367,6 +387,12 @@ function draw() {
 
 // Reiniciar el juego cuando pierdes
 function gameOver() {
+  // Actualizar best score si corresponde
+  if (score > bestScore) {
+    bestScore = score;
+    localStorage.setItem('snakeBestScore', bestScore);
+  }
+  updateScoreBoard();
   isGameOver = true; // Define el final del juego
   deathSound.currentTime = 0;
   deathSound.play().catch(err => console.log("Error:", err));
