@@ -51,6 +51,19 @@ const backgroundMusic = new Audio();
 backgroundMusic.src = "audios/piggies.mp3";
 backgroundMusic.loop = true; // Repetir infinitamente
 backgroundMusic.volume = 0.5; // Volumen al 50%
+// Imagen de bomba (mine)
+const mineImg = new Image();
+mineImg.src = "imagenes/mine.png";
+
+// Audio de explosión
+const explosionSound = new Audio("audios/explosion.mp3");
+explosionSound.volume = 0.8;
+
+// Gestión de bombas
+let bombs = []; // { x, y, spawnTime }
+let isExploding = false;
+let explosionStart = 0;
+const explosionDuration = 600; // ms
 let musicStarted = false;
 
 // Iniciar música en la primera interacción
@@ -164,6 +177,32 @@ window.addEventListener("keyup", (e) => { if (e.code === "Space") isSlowMo = fal
 function update() {
   if (!gameStarted) return;
 
+  const now = Date.now();
+  // Limpiar bombas expiradas (duran 5 segundos)
+  bombs = bombs.filter(b => now - b.spawnTime < 5000);
+
+  // Si el score ya permite bombas, intentar spawn según probabilidad y límite
+  if (score >= 10) {
+    const prob = score >= 35 ? 0.35 : 0.2 + ((score - 10) / (35 - 10)) * 0.15; // 20% -> 35%
+    const maxBombs = score >= 40 ? 5 : Math.max(1, Math.floor(1 + ((score - 10) / (40 - 10)) * 4));
+    if (bombs.length < maxBombs && Math.random() < prob) {
+      // intentar ubicar bomba en posición aleatoria que no coincida con la serpiente, comida o bombas
+      let attempts = 0;
+      while (attempts < 50 && bombs.length < maxBombs) {
+        attempts++;
+        const bx = Math.floor(Math.random() * (canvas.width / size)) * size;
+        const by = Math.floor(Math.random() * (canvas.height / size)) * size;
+        const onSnake = snake.some(s => s.x === bx && s.y === by);
+        const onFood = (food.x === bx && food.y === by);
+        const onBomb = bombs.some(b => b.x === bx && b.y === by);
+        if (!onSnake && !onFood && !onBomb) {
+          bombs.push({ x: bx, y: by, spawnTime: now });
+          break;
+        }
+      }
+    }
+  }
+
   if (inputQueue.length > 0) { //updatea según la queue de movimientos
     const nextMove = inputQueue.shift();
     dx = nextMove.dx;
@@ -171,6 +210,17 @@ function update() {
   }
   
   const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+  // Revisar colisión con bomba antes de mover (explota)
+  const bombIdx = bombs.findIndex(b => b.x === head.x && b.y === head.y);
+  if (bombIdx !== -1) {
+    // iniciar secuencia de explosión: sonido, sacudida y flash; luego game over
+    bombs.splice(bombIdx, 1);
+    isExploding = true;
+    explosionStart = Date.now();
+    try { explosionSound.currentTime = 0; explosionSound.play(); } catch (err) { console.log('Error al reproducir explosión:', err); }
+    return; // pausar la actualización de la serpiente hasta que termine la explosión
+  }
 
   // Revisar si chocó con la pared
   if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height) {
@@ -197,6 +247,18 @@ function update() {
 
 // Dibujar todo en el canvas
 function draw() {
+  // Si hay explosión en curso, aplicar sacudida vía transform CSS
+  if (isExploding) {
+    const now = Date.now();
+    const progress = Math.min(1, (now - explosionStart) / explosionDuration);
+    const shakeAmp = Math.ceil((1 - progress) * 12);
+    const offX = Math.floor(Math.random() * (shakeAmp * 2 + 1)) - shakeAmp;
+    const offY = Math.floor(Math.random() * (shakeAmp * 2 + 1)) - shakeAmp;
+    canvas.style.transform = `translate(${offX}px, ${offY}px)`;
+  } else {
+    canvas.style.transform = '';
+  }
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // Dibujar la comida (imagen de manzana)
@@ -208,6 +270,18 @@ function draw() {
   }
 
   // Dibujar la serpiente usando imágenes: cabeza, cuerpo y cola
+  // Dibujar bombas
+  bombs.forEach(b => {
+    if (mineImg.complete) {
+      ctx.drawImage(mineImg, b.x, b.y, size - 2, size - 2);
+    } else {
+      ctx.fillStyle = "#222";
+      ctx.fillRect(b.x, b.y, size - 2, size - 2);
+      ctx.fillStyle = "#f00";
+      ctx.fillText("B", b.x + 8, b.y + 24);
+    }
+  });
+
   snake.forEach((seg, index) => {
     
     const w = size - 2;
@@ -275,6 +349,20 @@ function draw() {
     ctx.font = "20px Arial";
     ctx.fillText("Press any arrow key to start", canvas.width / 2, canvas.height - 100);
   }
+
+  // Si hay explosión, dibujar flash y finalizar la secuencia al completarse
+  if (isExploding) {
+    const now = Date.now();
+    const progress = Math.min(1, (now - explosionStart) / explosionDuration);
+    ctx.fillStyle = `rgba(255,255,255,${1 - progress})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (progress >= 1) {
+      // terminar explosión y declarar game over
+      isExploding = false;
+      canvas.style.transform = '';
+      gameOver();
+    }
+  }
 }
 
 // Reiniciar el juego cuando pierdes
@@ -293,7 +381,7 @@ function main(currentTime) {
   let currentDelay = isSlowMo ? gameSpeed * 3 : gameSpeed;
 
   if (diff > currentDelay) {
-    if (!isGameOver) { // solo hacer si sigue el juego
+    if (!isGameOver && !isExploding) { // solo actualizar si sigue el juego y no estamos explotando
       update();
     }
     draw();
