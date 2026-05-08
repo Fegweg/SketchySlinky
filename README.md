@@ -13,7 +13,7 @@
 ## Características Destacadas
 
 * **Habilidad "Slow-Mo":** Al mantener presionada la barra espaciadora, el tiempo se ralentiza, permitiendo maniobras precisas en situaciones de alto riesgo.
-* **Dificultad Dinámica:** A partir de los 10 puntos, aparecen minas explosivas en el mapa. La probabilidad de aparición y la cantidad de minas aumentan conforme el jugador progresa.
+* **Dificultad Dinámica:** A partir de los 5 puntos, aparecen minas explosivas en el mapa. La probabilidad de aparición y la cantidad de minas aumentan conforme el jugador progresa.
 * **Feedback Háptico Visual:** Sistema de sacudida de pantalla (*screen shake*) y destellos (*flash*) integrados mediante manipulaciones del DOM y CSS cuando ocurre una explosión.
 * **Control de Input de Alta Precisión:** Implementación de una **Input Queue** (cola de entradas) para evitar que cambios rápidos de dirección provoquen colisiones accidentales con el propio cuerpo del jugador.
 * **Diseño Visual Moderno:** Fondo de video en bucle, tipografía retro *Press Start 2P* y sprites detallados para la cabeza, cuerpo y cola de la serpiente.
