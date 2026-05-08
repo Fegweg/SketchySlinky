@@ -49,13 +49,17 @@ let inputQueue = []; // Cola para manejar inputs rápidos
 const foodImage = new Image();
 foodImage.src = "imagenes/manzana.png";
 
-// Cargar sprites de la serpiente (head, body, tail/back)
-const headImg = new Image();
-headImg.src = "imagenes/Snake/head.png";
-const bodyImg = new Image();
-bodyImg.src = "imagenes/Snake/body.png";
-const tailImg = new Image();
-tailImg.src = "imagenes/Snake/back.png";
+// Cargar sprites de la serpiente (front=head, middle=body, back=tail, left/right para curvas)
+const frontImg = new Image();
+frontImg.src = "imagenes/Snake/front.png";
+const middleImg = new Image();
+middleImg.src = "imagenes/Snake/middle.png";
+const backImg = new Image();
+backImg.src = "imagenes/Snake/back.png";
+const leftImg = new Image();
+leftImg.src = "imagenes/Snake/left.png";
+const rightImg = new Image();
+rightImg.src = "imagenes/Snake/right.png";
 
 // Cargar música de fondo
 const backgroundMusic = new Audio();
@@ -314,26 +318,42 @@ function draw() {
     let angle = 0;
 
     if (index === 0) {
-      img = headImg;
+      img = frontImg;
       if (dx === 0 && dy === 0) {
             angle = 0; 
         } else {
             angle = Math.atan2(dy, dx);
         }
     } else if (index === snake.length - 1) {
-      img = tailImg;
+      img = backImg;
       const prev = snake[index - 1];
       angle = Math.atan2(seg.y - prev.y, seg.x - prev.x);
     } else {
-      img = bodyImg;
       const prev = snake[index - 1];
       const next = snake[index + 1];
-      angle = Math.atan2(next.y - prev.y, next.x - prev.x);
+      // Si prev y next están alineados, usar segmento recto; si no, es una curva
+      if (prev.x === next.x || prev.y === next.y) {
+        img = middleImg;
+        angle = Math.atan2(next.y - prev.y, next.x - prev.x);
+      } else {
+        // curva: decidir left/right según orientación (cross product)
+        const v1x = seg.x - prev.x;
+        const v1y = seg.y - prev.y;
+        const v2x = next.x - seg.x;
+        const v2y = next.y - seg.y;
+        const cross = v1x * v2y - v1y * v2x;
+        img = cross > 0 ? rightImg : leftImg;
+        angle = Math.atan2(next.y - prev.y, next.x - prev.x);
+      }
     }
 
     ctx.save();
     ctx.translate(seg.x + w / 2, seg.y + h / 2);
-    ctx.rotate(angle);
+    // Rotación adicional para sprites de curva (left/right)
+    let extraAngle = 0;
+    if (img === leftImg) extraAngle = Math.PI / 4; // -45°
+    if (img === rightImg) extraAngle = -Math.PI / 4; // +45°
+    ctx.rotate(angle + extraAngle);
     if (img && img.complete) {
       ctx.drawImage(img, -w / 2, -h / 2, w, h);
     } else {
